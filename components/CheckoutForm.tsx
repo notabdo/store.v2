@@ -33,6 +33,14 @@ const CheckoutForm: React.FC = () => {
     }));
   };
 
+  // Calculate final total - fixed to work without coupon
+  const getFinalTotal = () => {
+    if (discount > 0) {
+      return total / discount;
+    }
+    return total;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -44,7 +52,8 @@ const CheckoutForm: React.FC = () => {
     setIsSubmitting(true);
 
     try {
-      const success = await sendOrderToTelegram(customerInfo, items, total / discount);
+      // Use the fixed total calculation
+      const success = await sendOrderToTelegram(customerInfo, items, getFinalTotal());
 
       if (success) {
         setOrderStatus('success');
@@ -67,10 +76,11 @@ const CheckoutForm: React.FC = () => {
     const code = couponRef.current?.value.trim().toLowerCase();
     if (code === "right") {
       setDiscount(2);
-      setShowsd(true)
+      setShowsd(true);
     } else {
       alert("Invalid coupon code");
       setDiscount(0);
+      setShowsd(false);
     }
   };
 
@@ -94,18 +104,16 @@ const CheckoutForm: React.FC = () => {
           </div>
         )}
 
-{showsd && 
-        (
-          <h1 className='p-5 text-4xl text-[#21bb54] font-extrabold'>Discount -%{100 / discount }</h1>
-        )
-        }
+        {showsd && (
+          <h1 className='p-5 text-4xl text-[#21bb54] font-extrabold'>
+            Discount -{Math.round(100 - (100 / discount))}%
+          </h1>
+        )}
       </div>
 
       <div className="flex justify-between py-2 font-bold text-lg mt-4">
-
-        <span>Total </span>
-      
-        {discount > 0 ? <span>${(total / discount).toFixed(2)}</span> : <span>${(total).toFixed(2)}</span>}
+        <span>Total</span>
+        <span>${getFinalTotal().toFixed(2)}</span>
       </div>
 
       <form onSubmit={handleSubmit} className="mt-6">
